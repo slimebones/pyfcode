@@ -1,11 +1,47 @@
 from __future__ import annotations
 
-from typing import TypeVar
+import contextlib
+from typing import Any, TypeVar
 
-from pykit.singleton import Singleton
+_SingletonInstance = TypeVar("_SingletonInstance")
 
+class _SingletonMeta(type):
+    """Singleton metaclass for implementing singleton patterns.
 
-class FcodeCore(Singleton):
+    See:
+        https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
+    """
+    __instances: dict[type, object] = {}
+
+    def __call__(cls, *args, **kwargs) -> Any:
+        if cls not in cls.__instances:
+            cls.__instances[cls] = super().__call__(*args, **kwargs)
+        return cls.__instances[cls]
+
+    def __validate_in_instances(cls, cannot_message: str) -> None:
+        if cls not in cls.__instances.keys():
+            raise ValueError(
+                f"{cannot_message} - class {cls} not initialized"
+            )
+
+    def discard(cls, should_validate: bool = True) -> None:
+        if should_validate:
+            cls.__validate_in_instances("cannot discard")
+        with contextlib.suppress(KeyError):
+            del cls.__instances[cls]
+
+class _Singleton(metaclass=_SingletonMeta):
+    """Singleton base class."""
+    @classmethod
+    def ie(cls: type[_SingletonInstance]) -> _SingletonInstance:
+        """Gets the single instance of the Singleton.
+
+        Returns:
+            Instance the Singleton holds.
+        """
+        return cls()
+
+class FcodeCore(_Singleton):
     # shouldn't accept any arguments since will be created argumentless as
     # a singleton
     def __init__(self):
@@ -171,7 +207,6 @@ class FcodeCore(Singleton):
     def is_code_valid(self, code: str) -> bool:
         # TODO: implement fcode format
         return True
-
 
 TType = TypeVar("TType", bound=type)
 def code(code: str, legacy_codes: list[str] | None = None):

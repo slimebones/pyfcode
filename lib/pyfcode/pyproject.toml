@@ -7,7 +7,6 @@ readme = "readme.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pykit = { path = "../../../pykit", develop = true }
 
 [build-system]
 requires = ["poetry-core"]
